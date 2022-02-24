@@ -1,5 +1,7 @@
 package emlakburada.service;
 
+import emlakburada.client.BannerClient;
+import emlakburada.client.request.BannerRequest;
 import emlakburada.enums.RealEstateType;
 import emlakburada.enums.State;
 import emlakburada.model.Advert;
@@ -8,10 +10,14 @@ import emlakburada.model.dto.AdvertDetailDto;
 import emlakburada.model.dto.request.AdvertRequest;
 import emlakburada.model.dto.response.AdvertResponse;
 import emlakburada.model.user.IndividualUser;
+
+import emlakburada.queue.QueueService;
 import emlakburada.repository.AdvertRepository;
 import emlakburada.repository.IndividualUserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,15 +30,34 @@ public class AdvertService {
     private IndividualUserRepository individualUserRepository;
 
     @Autowired
+    private BannerClient bannerClient;
+
+    @Autowired
+    QueueService queueService;
+
+    private BannerRequest bannerRequest = new BannerRequest();
+
+
+
+
+    @Autowired
     public AdvertService(AdvertRepository advertRepository, IndividualUserRepository individualUserRepository){
         this.advertRepository = advertRepository;
         this.individualUserRepository = individualUserRepository;
     }
 
-    public AdvertResponse addAdvert(AdvertRequest request){
+    public AdvertResponse addAdvert(@RequestBody AdvertRequest request){
         Advert advert = convertToAdvert(request);
         Advert savedAdvert = advertRepository.addAdvert(advert);
         //advertRepository.addAdvert(advert);
+
+        //bannerRequest.setAdvertNo(1);
+        //bannerRequest.setPhone("555");
+        EmailMessage emailMessage = new EmailMessage();
+        emailMessage.setEmail("alperenmutlu1903@gmail.com");
+
+        bannerClient.saveBanner(bannerRequest);
+        queueService.sendMessage(emailMessage);
         return convertToAdvertResponse(savedAdvert);
     }
 
